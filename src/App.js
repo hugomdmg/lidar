@@ -1,6 +1,6 @@
 import './App.css';
 import Scene from './Scene';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import Papa from 'papaparse';
 import React, { useState } from 'react';
 import Loading from './Loading';
@@ -10,7 +10,20 @@ import Loading from './Loading';
 function App() {
   const [coordinates, setCoordinates] = useState([]);
   const [loading, setLoading] = useState(false)
+  const [fallingPoints, setFallingPoints] = useState(
+    Array.from({ length: 5 }, () => ({
+      x: Math.random(),
+      y: Math.random() + 2,
+      z: Math.random(),
+      vx: 0,
+      vy: 0.01,
+      vz: 0
+    }))
+  );
+  //-----------------
+const [viewSimulation, setViewSimulation] = useState(false)
 
+  //-------------------
 
   const handleFileUpload = (event) => {
     setLoading(true)
@@ -72,12 +85,13 @@ function App() {
         {loading && (
           <Loading size={100} />
         )}
+        <button onClick={() => {setViewSimulation(!viewSimulation) }}>view simulation</button>
         <Canvas
           camera={{ position: [10, 10, 10] }}
           style={{ width: '100%', height: '100vh' }}
           shadows
         >
-          <Scene coordinates={coordinates} />
+          <Scene viewSimulation={viewSimulation} coordinates={coordinates} setLoading={setLoading} fallingPoints={fallingPoints} />
         </Canvas>
       </header>
     </div>

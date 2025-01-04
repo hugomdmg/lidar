@@ -1,58 +1,83 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { OrbitControls } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
-import Loading from './Loading';
 
-const Scene = ({ coordinates }) => {
+const Scene = ({ viewSimulation, coordinates, setLoading }) => {
     const pointCloudRef = useRef(null);
     const orbitControlsRef = useRef(null);
-    // const fallingBufferRef = useRef(null);
+    const fallingBufferRef = useRef(null);
 
-    // Inicializamos los puntos que caen
-    // const [fallingPoints, setFallingPoints] = useState(
-    //     Array.from({ length: 100 }, () => ({
-    //         x: Math.random(),
-    //         y: Math.random()+2,
-    //         z: Math.random(),
-    //         vx:0,
-    //         vy:0.01,
-    //         vz:0
-    //     }))
-    // );
+    const [frame, setFrame] = useState(0);
+    const [ready, setReady] = useState(false);
+    const [simulation, setSimulation] = useState([]);
+    const [fallingPoints, setFallingPoints] = useState(
+        Array.from({ length: 5 }, () => ({
+            x: Math.random(),
+            y: Math.random() + 2,
+            z: Math.random(),
+            vx: 0,
+            vy: 0.01,
+            vz: 0
+        }))
+    );
+
+    const doSimulation = () => {
+        setLoading(true)
+        const simulationData = [];
+        for (let i = 0; i < 100; i++) {
+            const calculated = fallingPoints.map(point => ({
+                x: point.x,
+                y: point.y - i * 0.1,
+                z: point.z,
+                vx: point.vx,
+                vy: point.vy,
+                vz: point.vz,
+            }));
+            simulationData.push(calculated);
+        }
+        setSimulation(simulationData);
+        setReady(true);
+        setTimeout(()=>{
+
+            setLoading(false)
+        }, 100)
+    };
 
     useEffect(() => {
-        if (orbitControlsRef.current) {
-            orbitControlsRef.current.target.set(0, 0, 0);
+        if (viewSimulation && !ready) {
+            doSimulation();
         }
-    }, []);
+    }, [viewSimulation, ready]);
 
-    // useFrame(() => {
-    //     if (fallingBufferRef.current) {
-    //         // Obtenemos la posición del buffer
-    //         const positions = fallingBufferRef.current.array;
+    useEffect(() => {
+        if (viewSimulation && simulation.length > 0) {
+            const intervalId = setInterval(() => {
+                setFrame(prevFrame => {
+                    if (prevFrame < simulation.length - 1) {
+                        return prevFrame + 1;
+                    } else {
+                        clearInterval(intervalId);
+                        return prevFrame;
+                    }
+                });
+            }, 100);
 
-    //         // Actualizamos las posiciones de los puntos
-    //         fallingPoints.forEach((point, index) => {
-    //             point.y -= point.vy;
+            return () => clearInterval(intervalId);
+        }
+    }, [viewSimulation, simulation]);
 
-    //             // Si el punto está fuera del límite, lo reiniciamos
-    //             if (point.y < -1) {
-    //                 point.y = Math.random()+2;
-    //                 point.x = Math.random();
-    //                 point.z = Math.random();
-    //                 point.vy = 0.01;
-    //             }
+    useEffect(() => {
+        if (fallingBufferRef.current && simulation.length > 0) {
+            const positions = fallingBufferRef.current.array;
 
-    //             // Actualizamos la posición en el buffer
-    //             positions[index * 3] = point.x;
-    //             positions[index * 3 + 1] = point.y;
-    //             positions[index * 3 + 2] = point.z;
-    //         });
+            simulation[frame].forEach((point, index) => {
+                positions[index * 3] = point.x;
+                positions[index * 3 + 1] = point.y;
+                positions[index * 3 + 2] = point.z;
+            });
 
-    //         // Marcamos el buffer como necesitado de actualización
-    //         fallingBufferRef.current.needsUpdate = true;
-    //     }
-    // });
+            fallingBufferRef.current.needsUpdate = true; // Notifica a Three.js que los datos han cambiado
+        }
+    }, [frame, simulation]);
 
     return (
         <>
@@ -67,7 +92,7 @@ const Scene = ({ coordinates }) => {
 
             <OrbitControls ref={orbitControlsRef} maxDistance={200} minDistance={0.5} />
 
-            {/* LIDAR Data Points */}
+            {/* Puntos de datos LIDAR */}
             <points ref={pointCloudRef} castShadow receiveShadow>
                 {coordinates.length > 0 && (
                     <bufferGeometry>
@@ -84,25 +109,25 @@ const Scene = ({ coordinates }) => {
                 <pointsMaterial fog={true} color={'#61dafb'} size={0.01} />
             </points>
 
-            {/* Falling Points */}
-            {/* <points castShadow receiveShadow>
-                <bufferGeometry>
-                    <bufferAttribute
-                        ref={fallingBufferRef}
-                        attach="attributes-position"
-                        array={new Float32Array(
-                            fallingPoints.flatMap((point) => [point.x, point.y, point.z])
-                        )}
-                        count={fallingPoints.length}
-                        itemSize={3}
-                    />
-                </bufferGeometry>
-                <pointsMaterial fog={true} color={'#ff6347'} size={0.05} />
-            </points> */}
+            {/* Puntos de simulación */}
+            {simulation.length > 0 && (
+                <points castShadow receiveShadow>
+                    <bufferGeometry>
+                        <bufferAttribute
+                            ref={fallingBufferRef}
+                            attach="attributes-position"
+                            array={new Float32Array(
+                                simulation[0].flatMap(() => [0, 0, 0]) // Inicializar con valores vacíos
+                            )}
+                            count={fallingPoints.length}
+                            itemSize={3}
+                        />
+                    </bufferGeometry>
+                    <pointsMaterial fog={true} color={'#ff6347'} size={0.1} />
+                </points>
+            )}
         </>
     );
 };
 
 export default Scene;
-
-
