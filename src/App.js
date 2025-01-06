@@ -85,7 +85,7 @@ const [viewSimulation, setViewSimulation] = useState(false)
         {loading && (
           <Loading size={100} />
         )}
-        <button onClick={() => {setViewSimulation(!viewSimulation) }}>view simulation</button>
+        {/* <button onClick={() => {setViewSimulation(!viewSimulation) }}>view simulation</button> */}
         <Canvas
           camera={{ position: [10, 10, 10] }}
           style={{ width: '100%', height: '100vh' }}
