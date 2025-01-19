@@ -34,7 +34,7 @@ const Scene = ({ coordinates }) => {
             <points ref={pointCloudRef} castShadow receiveShadow>
                 <bufferGeometry ref={geometryRef}>
                 </bufferGeometry>
-                <pointsMaterial color={'#61dafb'} size={0.01} />
+                <pointsMaterial color={'#61dafb'} size={0.02} />
             </points>
         </>
     );
