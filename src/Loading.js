@@ -54,7 +54,7 @@ const Loading = ({size}) => {
     return (
         <div className="flex flex-col items-center justify-center">
             <canvas ref={canvasRef}/>
-            <p className="mb-4 text-gray-700">Loading...</p>
+            <p className="mb-4 text-gray-700">Creating map, please wait...</p>
         </div>
     );
 };
